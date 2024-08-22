@@ -1,19 +1,5 @@
 <div id="top"></div>
 
-<!-- VARIABLES TO GLOBAL SEARCH + REPLACE
-- rust-cli-starter                           // repo_name
-- Rust CLI Starter                           // project_title
-- A starter template for a Rust CLI program  // project_description
-- MylesWritesCode                            // github_username
-- MylesCodesEmoji                            // twitter_handle
-- myles-berueda                              // linkedin_username
-- me@themapletree.io                         // email
--->
-
-<!-- [![Forks][forks-shield]][forks-url] -->
-<!-- [![Stargazers][stars-shield]][stars-url] -->
-<!-- [![Issues][issues-shield]][issues-url] -->
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
@@ -21,12 +7,14 @@
     <img src=".meta/logo.png" alt="Logo">
   </a>
 
-<h3 align="center">Rust WASM Playground</h3>
+  <h3 align="center">Rust WASM Playground</h3>
 
   <p align="center">
     A little project to play around with Rust and WebAssembly.
     <br />
-    <a href="https://github.com/MylesWritesCode/rust-cli-starter"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/MylesWritesCode/rust-wasm">
+      <strong>Explore the docs »</strong>
+    </a>
     <br />
     <br />
     <a href="https://github.com/MylesWritesCode/rust-cli-starter">View Demo</a>
@@ -74,6 +62,7 @@
 won't make a lot of sense.** Installation instructions should work, though.
 This project is just a playground so I can mess around with early WASM in Rust.
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ### Built With
@@ -82,6 +71,7 @@ This project is just a playground so I can mess around with early WASM in Rust.
 - [wasm-pack](https://rustwasm.github.io)
 - [pnpm](https://pnpm.io/)
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
@@ -101,7 +91,7 @@ installation steps below.
 
 1. Clone the repo
 
-```
+```sh
 # with https
 git clone https://github.com/MylesWritesCode/rust-cli-starter.git
 
@@ -111,7 +101,7 @@ git clone git@github.com:MylesWritesCode/rust-cli-starter.git
 
 2. Install dependencies
 
-```
+```sh
 # install node dependencies
 pnpm install
 
@@ -121,10 +111,11 @@ cargo build
 
 3. Start the project
 
-```
+```sh
 pnpm dev
 ```
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- USAGE EXAMPLES -->
@@ -140,12 +131,14 @@ Happy hacking!
 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- NOTES -->
 
 ## Notes
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- ROADMAP -->
@@ -157,20 +150,25 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 - [ ] Feature 3
   - [ ] Nested Feature
 
-See the [open issues](https://github.com/MylesWritesCode/rust-cli-starter/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/MylesWritesCode/rust-cli-starter/issues)
+for a full list of proposed features (and known issues).
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- CONTRIBUTING -->
 
 ## Contributing
 
-[![Contributors][contributors-shield]][contributors-url]
+[![Contributors](https://img.shields.io/github/contributors/MylesWritesCode/rust-cli-starter.svg?style=for-the-badge)](https://github.com/MylesWritesCode/rust-cli-starter/graphs/contributors)
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are what make the open source community such an amazing place to
+learn, inspire, and create. Any contributions you make are **greatly
+appreciated**.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+If you have a suggestion that would make this better, please fork the repo and
+create a pull request. You can also simply open an issue with the tag
+"enhancement". Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -178,28 +176,31 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LICENSE -->
 
 ## License
 
-[![MIT License][license-shield]][license-url]
+[![LICENSE](https://img.shields.io/github/license/MylesWritesCode/rust-wasm.svg?style=for-the-badge)](https://github.com/MylesWritesCode/rust-wasm/blob/master/LICENSE)
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- CONTACT -->
 
 ## Contact
 
-**Myles Berueda**
+### Myles Berueda
 
-[![LinkedIn][linkedin-shield]][linkedin-url]
-[![Mastodon][mastodon-shield]][mastodon-url]
-![GitHub followers](https://img.shields.io/github/followers/MylesWritesCode?style=for-the-badge&label=GITHUB)
+[![LinkedIn](https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555)](https://linkedin.com/in/myles-berueda)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/113004977572109573?domain=https%3A%2F%2Fmstdn.social&style=for-the-badge&label=MSTDN.SOCIAL)](https://mstdn.social/@mylesberueda)
+[![Github followers](https://img.shields.io/github/followers/MylesWritesCode?style=for-the-badge&label=GITHUB)](https://github.com/MylesWritesCode)
 
+<!-- markdownlint-disable-next-line MD033 -->
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- ACKNOWLEDGMENTS -->
@@ -214,12 +215,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 
-[contributors-shield]: https://img.shields.io/github/contributors/MylesWritesCode/rust-cli-starter.svg?style=for-the-badge
-[contributors-url]: https://github.com/MylesWritesCode/rust-cli-starter/graphs/contributors
-[license-shield]: https://img.shields.io/github/license/MylesWritesCode/rust-wasm.svg?style=for-the-badge
-[license-url]: https://github.com/MylesWritesCode/rust-wasm/blob/master/LICENSE
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/myles-berueda
-[mastodon-shield]: https://img.shields.io/mastodon/follow/113004977572109573?domain=https%3A%2F%2Fmstdn.social&style=for-the-badge&label=MSTDN.SOCIAL
-[mastodon-url]: https://mstdn.social/@mylesberueda
 [product-screenshot]: .meta/screenshot.png
