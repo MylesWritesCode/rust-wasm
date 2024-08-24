@@ -1,0 +1,7 @@
+{
+  "name": "api",
+  "scripts": {
+    "dev": "cargo run server start",
+    "build": "cargo build --release"
+  }
+}

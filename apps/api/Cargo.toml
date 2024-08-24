@@ -8,15 +8,25 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-color-eyre = "0.6.3"
-tokio = { version = "1.36.0", features = ["full"] }
-axum = "0.7.4"
-serde = { version = "1.0.196", features = ["derive"] }
-serde_json = "1.0.113"
+axum = "0.7.5"
 axum-macros = "0.4.1"
+bon = "1.2.1"
+chrono = "0.4.38"
+color-eyre = "0.6.3"
+derive_more = { version = "1.0.0", features = ["full"] }
+nanoid = "0.4.0"
+rand = "0.8.5"
+serde = { version = "1.0.209", features = ["derive"] }
+serde_json = "1.0.127"
+thiserror = "1.0.63"
+tokio = { version = "1.39.3", features = ["full"] }
+tower-http = { version = "0.5.2", features = ["cors", "trace"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-thiserror = "1.0.58"
+tracing-subscriber = { version = "0.3.18", features = [
+  "env-filter",
+  "fmt",
+  "std",
+] }
 
 [dependencies.clap]
 git = "https://github.com/clap-rs/clap"
