@@ -10,12 +10,12 @@
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "prettier": "^3.2.5",
+    "prettier": "^3.3.3",
     "turbo": "^2.0.14"
   },
   "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=18"
   },
-  "name": "kitchen-sink"
+  "name": "rust-wasm-playground"
 }

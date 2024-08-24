@@ -1,6 +1,7 @@
 import React from "react";
 import "./styles.css";
 import { CounterButton, Link } from "@repo/ui";
+import { greet } from "metamorph";
 
 function App(): JSX.Element {
   return (
@@ -10,6 +11,7 @@ function App(): JSX.Element {
         <span>Kitchen Sink</span>
       </h1>
       <CounterButton />
+      <button onClick={() => greet('hello there general kenobi')} >some button </button>
       <p className="description">
         Built With{" "}
         <Link href="https://turbo.build/repo" newTab>

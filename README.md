@@ -91,25 +91,25 @@ installation steps below.
 
 1. Clone the repo
 
-```sh
-# with https
-git clone https://github.com/MylesWritesCode/rust-cli-starter.git
+   ```sh
+   # with https
+   git clone https://github.com/MylesWritesCode/rust-cli-starter.git
 
-# or ssh
-git clone git@github.com:MylesWritesCode/rust-cli-starter.git
-```
+   # or ssh
+   git clone git@github.com:MylesWritesCode/rust-cli-starter.git
+   ```
 
 2. Install dependencies
 
-```sh
-# install node dependencies
-pnpm install
+   ```sh
+   # install node dependencies
+   pnpm install
 
-# install rust dependencies
-cargo build
-```
+   # install rust dependencies
+   cargo build
+   ```
 
-3. Start the project
+#### Start the project
 
 ```sh
 pnpm dev
@@ -122,12 +122,14 @@ pnpm dev
 
 ## Usage
 
-This repo is meant to be used as a template for Rust CLI programs. Metadata
-files will be within the `.meta` folder. In there, you'll find places to put
-your project logo and screenshot. Importantly, you'll find a fresh README.md
-that you can use to overwrite this one.
+1. Follow all the installation steps above
+2. Build WASM libraries
 
-Happy hacking!
+   ```sh
+   wasm-pack build ./packages/metamorph
+   ```
+
+3. Start the project (see above)
 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
