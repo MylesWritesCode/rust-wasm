@@ -1,13 +1,11 @@
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod formatter;
+pub(super) mod formatter;
 pub(super) mod http;
 
-pub use http::layer;
-
-pub const LOG_PREFIX: &str = "log::http";
-pub const REQ_PREFIX: &str = "log::http::req";
-pub const RES_PREFIX: &str = "log::http::res";
+pub(super) use http::layer::Layer;
+pub(super) use http::visitor::Visitor;
+pub(super) use http::LOG_PREFIX;
 
 pub struct Logger;
 
@@ -22,17 +20,10 @@ impl Logger {
                 tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                     // axum logs rejections from built-in extractors with the `axum::rejection`
                     // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                    "api=trace,tower_http=debug,axum::rejection=trace".into()
+                    "api=trace,tower_http=trace,axum::rejection=trace".into()
                 }),
             )
-            // Global event formatter
-            .with(tracing_subscriber::fmt::layer().event_format(formatter::Formatter))
-            // HTTP event formatter
-            .with(tracing_subscriber::fmt::layer().with_filter(
-                tracing_subscriber::filter::filter_fn(|metadata| {
-                    metadata.name().starts_with(LOG_PREFIX)
-                }),
-            ))
+            .with(tracing_subscriber::fmt::layer().event_format(formatter::Formatter::new()))
             .init();
     }
 }

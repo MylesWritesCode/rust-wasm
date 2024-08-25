@@ -109,6 +109,7 @@ dependencies = [
  "tokio",
  "tower-http",
  "tracing",
+ "tracing-core",
  "tracing-subscriber",
 ]
 

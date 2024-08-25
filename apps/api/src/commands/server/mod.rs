@@ -34,8 +34,7 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
         .route("/", axum::routing::get(root))
         .route("/users", axum::routing::post(create_user))
         .route("/generate-graph", axum::routing::post(generate_data))
-        .layer(tower_http::trace::TraceLayer::new_for_http())
-        .layer(log::http::layer::Layer::new().get_layer())
+        .layer(log::Layer::new().get_layer())
         .layer(cors::Cors::new().get_layer());
 
     let listener = tokio::net::TcpListener::bind(format!(
@@ -83,39 +82,41 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
         let uri = "/hello";
         let body = "{}";
 
+        let kind = "REQ";
         let method = axum::http::Method::GET.to_string();
-        let e = tracing::error_span!(log::REQ_PREFIX, method, uri, body);
-        tracing::error!(parent: &e, "has error");
+        let e = tracing::error_span!(log::LOG_PREFIX, method, uri, body, kind);
+        let kind = "RES";
+        tracing::error!(parent: &e, kind, "has error");
 
         let method = axum::http::Method::PUT.to_string();
-        let w = tracing::warn_span!(log::REQ_PREFIX, method, uri, body);
+        let w = tracing::warn_span!(log::LOG_PREFIX, method, uri, body, kind);
         tracing::warn!(parent: &w, "has warning");
 
         let method = axum::http::Method::POST.to_string();
-        let i = tracing::info_span!(log::REQ_PREFIX, method, uri, body);
+        let i = tracing::info_span!(log::LOG_PREFIX, method, uri, body, kind);
         tracing::info!(parent: &i, "has info");
 
         let method = axum::http::Method::HEAD.to_string();
-        let d = tracing::debug_span!(log::REQ_PREFIX, method, uri, body,);
+        let d = tracing::debug_span!(log::LOG_PREFIX, method, uri, body, kind);
         tracing::debug!(parent: &d, "has debug");
 
         let method = axum::http::Method::PATCH.to_string();
-        let t = tracing::trace_span!(log::REQ_PREFIX, method, uri, body,);
+        let t = tracing::trace_span!(log::LOG_PREFIX, method, uri, body, kind);
         tracing::trace!(parent: &t, "has trace");
 
-        let span = tracing::info_span!(log::REQ_PREFIX, method, uri, body);
+        let span = tracing::info_span!(log::LOG_PREFIX, method, uri, body, kind);
 
         let method = axum::http::Method::TRACE.to_string();
-        tracing::info!(parent: &span, method, uri, body);
+        tracing::info!(parent: &span, method, uri, body, kind);
 
         let method = axum::http::Method::DELETE.to_string();
-        tracing::info!(parent: &span, method, uri, body);
+        tracing::info!(parent: &span, method, uri, body, kind);
 
         let method = axum::http::Method::OPTIONS.to_string();
-        tracing::info!(parent: &span, method, uri, body);
+        tracing::info!(parent: &span, method, uri, body, kind);
 
         let method = axum::http::Method::CONNECT.to_string();
-        tracing::info!(parent: &span, method, uri, body);
+        tracing::info!(parent: &span, method, uri, body, kind);
     }
 
     axum::serve(listener, app).await?;

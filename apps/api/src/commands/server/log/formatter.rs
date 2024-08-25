@@ -1,7 +1,12 @@
 use color_eyre::owo_colors::OwoColorize;
-use tracing::instrument::WithSubscriber;
 
 pub struct Formatter;
+
+impl Formatter {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl<S, N> tracing_subscriber::fmt::FormatEvent<S, N> for Formatter
 where
@@ -20,8 +25,8 @@ where
         let level: String = match *event.metadata().level() {
             tracing::Level::ERROR => "ERR".red().bold().to_string(),
             tracing::Level::WARN => "WRN".yellow().bold().to_string(),
-            tracing::Level::INFO => "INF".blue().bold().to_string(),
-            tracing::Level::DEBUG => "DBG".green().bold().to_string(),
+            tracing::Level::INFO => "INF".green().bold().to_string(),
+            tracing::Level::DEBUG => "DBG".blue().bold().to_string(),
             tracing::Level::TRACE => "TRC".purple().bold().to_string(),
         };
 
@@ -31,25 +36,20 @@ where
             for span in scope.from_root() {
                 let meta = span.metadata();
 
-                write!(writer, " {name} ", name = meta.name())?;
+                if meta.name().starts_with(super::LOG_PREFIX) {
+                    let mut visitor = super::Visitor::new();
+                    event.record(&mut visitor);
 
-                match meta.name() {
-                    super::REQ_PREFIX => {
-                        write!(writer, " send to req formatter ")?;
-                        // let mut visitor = visitor::RequestVisitor::default();
-                        // event.record(&mut visitor);
-                        // write!(writer, "{visitor}")?;
+                    if visitor.kind == Some("RES".to_string()) {
+                        write!(writer, "{visitor}")?;
                     }
-                    super::RES_PREFIX => {
-                        write!(writer, " send to res formatter ")?;
-                    }
-                    _ => {
-                        write!(writer, " {name} ", name = meta.name())?;
-                    }
+                } else {
+                    write!(writer, " SPN | name={}", meta.name())?;
+                    // ctx.field_format().format_fields(writer.by_ref(), event)?;
                 }
             }
         } else {
-            write!(writer, " ")?;
+            write!(writer, " LOG | ")?;
             ctx.field_format().format_fields(writer.by_ref(), event)?;
         }
 
