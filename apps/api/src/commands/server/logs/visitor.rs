@@ -1,3 +1,5 @@
+use color_eyre::owo_colors::OwoColorize;
+
 #[derive(Debug, Default)]
 pub struct RequestVisitor {
     pub method: Option<String>,
@@ -26,5 +28,32 @@ impl tracing::field::Visit for RequestVisitor {
                 println!("{}: {:?}", field.name(), value);
             }
         }
+    }
+}
+
+impl std::fmt::Display for RequestVisitor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.method {
+            Some(method) => {
+                let method = match method.as_str() {
+                    "GET" => "GET ",
+                    "PUT" => "PUT ",
+                    "POST" => "POST",
+                    "HEAD" => "HEAD",
+                    "PATCH" => "PTCH",
+                    "TRACE" => "TRCE",
+                    "DELETE" => "DLTE",
+                    "OPTIONS" => "OPTS",
+                    "CONNECT" => "CONN",
+                    _ => "NONE",
+                };
+
+                write!(f, " {method} |", method = method.green())?;
+            }
+
+            None => write!(f, " {method} |", method = "NONE".purple())?,
+        }
+
+        Ok(())
     }
 }

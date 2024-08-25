@@ -1,7 +1,8 @@
+mod cors;
 mod log;
+mod logs; // maybe deprecate this?
 
 use rand::Rng as _;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(clap::Args)]
 pub(crate) struct Arguments {
@@ -28,90 +29,14 @@ pub(crate) async fn run(args: &Arguments) -> crate::Result<()> {
 }
 
 async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                // axum logs rejections from built-in extractors with the `axum::rejection`
-                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                "api=trace,tower_http=debug,axum::rejection=trace".into()
-            }),
-        )
-        .with(tracing_subscriber::fmt::layer().event_format(log::Formatter))
-        // .with(tracing_subscriber::fmt::layer())
-        .init();
-
-    // let trace_layer = tower_http::trace::TraceLayer::new_for_http().make_span_with(
-    //     |request: &axum::http::Request<_>| {
-    //         let method = match request.method() {
-    //             &axum::http::Method::GET => " GET",
-    //             _ => request.method().as_str(),
-    //         };
-    //         let uri = request.uri();
-    //         let body = request
-    //             .extensions()
-    //             .get::<axum::extract::Json<serde_json::Value>>()
-    //             .map(|json| format!("{}", json.0))
-    //             .unwrap_or_else(|| "{}".to_string());
-    //
-    //         let e = tracing::error_span!(
-    //             log::HTTP_REQUEST_SPAN_NAME,
-    //             method,
-    //             uri = uri.to_string(),
-    //             body
-    //         );
-    //         let w = tracing::warn_span!(
-    //             log::HTTP_REQUEST_SPAN_NAME,
-    //             method,
-    //             uri = uri.to_string(),
-    //             body
-    //         );
-    //         let i = tracing::info_span!(
-    //             log::HTTP_REQUEST_SPAN_NAME,
-    //             method,
-    //             uri = uri.to_string(),
-    //             body
-    //         );
-    //         let d = tracing::debug_span!(
-    //             log::HTTP_REQUEST_SPAN_NAME,
-    //             method,
-    //             uri = uri.to_string(),
-    //             body
-    //         );
-    //         let t = tracing::trace_span!(
-    //             log::HTTP_REQUEST_SPAN_NAME,
-    //             method,
-    //             uri = uri.to_string(),
-    //             body
-    //         );
-    //
-    //         tracing::error!(parent: &e, ".");
-    //         tracing::warn!(parent: &w, ".");
-    //         tracing::info!(parent: &i, ".");
-    //         tracing::debug!(parent: &d, ".");
-    //         tracing::trace!(parent: &t, ".");
-    //
-    //         let span = tracing::warn_span!(
-    //             log::HTTP_REQUEST_SPAN_NAME,
-    //             method,
-    //             uri = uri.to_string(),
-    //             body
-    //         );
-    //
-    //         span
-    //     },
-    // );
-
-    let cors = tower_http::cors::CorsLayer::new()
-        .allow_origin(tower_http::cors::Any)
-        .allow_headers(tower_http::cors::Any)
-        .allow_methods(tower_http::cors::Any);
+    log::Logger::new().init();
 
     let app = axum::Router::new()
         .route("/", axum::routing::get(root))
         .route("/users", axum::routing::post(create_user))
         .route("/generate-graph", axum::routing::post(generate_data))
-        // .layer(trace_layer)
-        .layer(cors);
+        .layer(tower_http::trace::TraceLayer::new_for_http())
+        .layer(cors::Cors::new().get_layer());
 
     let listener = tokio::net::TcpListener::bind(format!(
         "{}:{}",
@@ -122,48 +47,75 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
 
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
 
+    tracing::error!(
+        x = "value",
+        complex.foo = "foo",
+        complex.bar = "bar",
+        "message",
+    );
+    tracing::warn!(
+        x = "value",
+        complex.foo = "foo",
+        complex.bar = "bar",
+        "message",
+    );
+    tracing::info!(
+        x = "value",
+        complex.foo = "foo",
+        complex.bar = "bar",
+        "message",
+    );
+    tracing::debug!(
+        x = "value",
+        complex.foo = "foo",
+        complex.bar = "bar",
+        "message",
+    );
+    tracing::trace!(
+        x = "value",
+        complex.foo = "foo",
+        complex.bar = "bar",
+        "message",
+    );
+
     // deleteme(myles)
     {
-        let e = tracing::error_span!(
-            log::HTTP_REQUEST_SPAN_NAME,
-            method = "PARENT",
-            uri = "/hello",
-            body = "{}"
-        );
-        let w = tracing::warn_span!(
-            log::HTTP_REQUEST_SPAN_NAME,
-            method = "PARENT",
-            uri = "/hello",
-            body = "{}"
-        );
-        let i = tracing::info_span!(
-            log::HTTP_REQUEST_SPAN_NAME,
-            method = "PARENT",
-            uri = "/hello",
-            body = "{}"
-        );
-        let d = tracing::debug_span!(
-            log::HTTP_REQUEST_SPAN_NAME,
-            method = "PARENT",
-            uri = "/hello",
-            body = "{}"
-        );
-        let t = tracing::trace_span!(
-            log::HTTP_REQUEST_SPAN_NAME,
-            method = "PARENT",
-            uri = "/hello",
-            body = "{}"
-        );
-
-        let method = "GET";
         let uri = "/hello";
         let body = "{}";
 
-        tracing::error!(parent: &e, method, uri, body);
-        tracing::warn!(parent: &w, method, uri, body);
-        tracing::info!(parent: &i, method, uri, body);
-        tracing::debug!(parent: &d, method, uri, body);
-        tracing::trace!(parent: &t, method, uri, body);
+        let method = axum::http::Method::GET.to_string();
+        let e = tracing::error_span!(log::REQ_PREFIX, method, uri, body);
+        tracing::error!(parent: &e, "has error");
+
+        let method = axum::http::Method::PUT.to_string();
+        let w = tracing::warn_span!(log::REQ_PREFIX, method, uri, body);
+        tracing::warn!(parent: &w, "has warning");
+
+        let method = axum::http::Method::POST.to_string();
+        let i = tracing::info_span!(log::REQ_PREFIX, method, uri, body);
+        tracing::info!(parent: &i, "has info");
+
+        let method = axum::http::Method::HEAD.to_string();
+        let d = tracing::debug_span!(log::REQ_PREFIX, method, uri, body,);
+        tracing::debug!(parent: &d, "has debug");
+
+        let method = axum::http::Method::PATCH.to_string();
+        let t = tracing::trace_span!(log::REQ_PREFIX, method, uri, body,);
+        tracing::trace!(parent: &t, "has trace");
+
+        let span = tracing::info_span!(log::REQ_PREFIX, method, uri, body);
+
+        let method = axum::http::Method::TRACE.to_string();
+        tracing::info!(parent: &span, method, uri, body);
+
+        let method = axum::http::Method::DELETE.to_string();
+        tracing::info!(parent: &span, method, uri, body);
+
+        let method = axum::http::Method::OPTIONS.to_string();
+        tracing::info!(parent: &span, method, uri, body);
+
+        let method = axum::http::Method::CONNECT.to_string();
+        tracing::info!(parent: &span, method, uri, body);
     }
 
     axum::serve(listener, app).await?;
