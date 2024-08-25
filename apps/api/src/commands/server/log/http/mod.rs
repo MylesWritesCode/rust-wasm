@@ -1,3 +1,3 @@
-mod layer;
+pub mod layer;
 mod request;
 mod response;

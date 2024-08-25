@@ -1,7 +1,9 @@
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 mod formatter;
-mod http;
+pub(super) mod http;
+
+pub use http::layer;
 
 pub const LOG_PREFIX: &str = "log::http";
 pub const REQ_PREFIX: &str = "log::http::req";

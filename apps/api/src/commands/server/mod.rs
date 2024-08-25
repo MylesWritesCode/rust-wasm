@@ -1,6 +1,5 @@
 mod cors;
 mod log;
-mod logs; // maybe deprecate this?
 
 use rand::Rng as _;
 
@@ -36,6 +35,7 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
         .route("/users", axum::routing::post(create_user))
         .route("/generate-graph", axum::routing::post(generate_data))
         .layer(tower_http::trace::TraceLayer::new_for_http())
+        .layer(log::http::layer::Layer::new().get_layer())
         .layer(cors::Cors::new().get_layer());
 
     let listener = tokio::net::TcpListener::bind(format!(
