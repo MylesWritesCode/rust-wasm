@@ -33,7 +33,7 @@ where
         event: &tracing::Event<'_>,
     ) -> std::fmt::Result {
         let timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-        write!(writer, "{timestamp} ")?;
+        write!(writer, "{timestamp}")?;
 
         let level: String = match *event.metadata().level() {
             tracing::Level::ERROR => "ERR".red().bold().to_string(),
@@ -43,7 +43,7 @@ where
             tracing::Level::TRACE => "TRC".purple().bold().to_string(),
         };
 
-        write!(writer, "| {level} | ")?;
+        write!(writer, " | {level} |")?;
 
         if let Some(scope) = ctx.event_scope() {
             for span in scope.from_root() {
@@ -55,9 +55,10 @@ where
                         let mut visitor = request::RequestVisitor::default();
                         event.record(&mut visitor);
 
+                        // todo(myles) impl Display for Visitor, then just output it here
                         match visitor.method {
-                            Some(method) => write!(writer, "{method} | ", method = method.green())?,
-                            None => write!(writer, "{method} | ", method = "NONE".purple())?,
+                            Some(method) => write!(writer, " {method} |", method = method.green())?,
+                            None => write!(writer, " {method} |", method = "NONE".purple())?,
                         }
                     }
                     _ => {
