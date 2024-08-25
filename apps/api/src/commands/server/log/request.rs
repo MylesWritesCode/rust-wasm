@@ -1,13 +1,11 @@
-pub const SPAN_NAME: &str = "api::http::request";
-
 #[derive(Debug, Default)]
-pub struct RequestFields {
+pub struct RequestVisitor {
     pub method: Option<String>,
     pub uri: Option<String>,
     pub body: Option<String>,
 }
 
-impl tracing::field::Visit for RequestFields {
+impl tracing::field::Visit for RequestVisitor {
     fn record_str(&mut self, field: &tracing::field::Field, value: &str) {
         match field.name() {
             "method" => self.method = Some(value.to_string()),

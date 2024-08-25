@@ -40,79 +40,66 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
         // .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let e = tracing::error_span!(
-        log::request::SPAN_NAME,
-        method = "PARENT",
-        uri = "/hello",
-        body = "{}"
-    );
-    let w = tracing::warn_span!(
-        log::request::SPAN_NAME,
-        method = "PARENT",
-        uri = "/hello",
-        body = "{}"
-    );
-    let i = tracing::info_span!(
-        log::request::SPAN_NAME,
-        method = "PARENT",
-        uri = "/hello",
-        body = "{}"
-    );
-    let d = tracing::debug_span!(
-        log::request::SPAN_NAME,
-        method = "PARENT",
-        uri = "/hello",
-        body = "{}"
-    );
-    let t = tracing::trace_span!(
-        log::request::SPAN_NAME,
-        method = "PARENT",
-        uri = "/hello",
-        body = "{}"
-    );
-
-    tracing::error!(parent: &e, "CHILD");
-    tracing::warn!(parent: &w, "CHILD");
-    tracing::info!(parent: &i, "CHILD");
-    tracing::debug!(parent: &d, "CHILD");
-    tracing::trace!(parent: &t, "CHILD");
-
-    let trace_layer = tower_http::trace::TraceLayer::new_for_http().make_span_with(
-        |request: &axum::http::Request<_>| {
-            let method = match request.method() {
-                &axum::http::Method::GET => " GET",
-                _ => request.method().as_str(),
-            };
-            let uri = request.uri();
-            let body = request
-                .extensions()
-                .get::<axum::extract::Json<serde_json::Value>>()
-                .map(|json| format!("{}", json.0))
-                .unwrap_or_else(|| "{}".to_string());
-
-            let e =
-                tracing::error_span!(log::request::SPAN_NAME, method, uri = uri.to_string(), body);
-            let w =
-                tracing::warn_span!(log::request::SPAN_NAME, method, uri = uri.to_string(), body);
-            let i =
-                tracing::info_span!(log::request::SPAN_NAME, method, uri = uri.to_string(), body);
-            let d =
-                tracing::debug_span!(log::request::SPAN_NAME, method, uri = uri.to_string(), body);
-            let t =
-                tracing::trace_span!(log::request::SPAN_NAME, method, uri = uri.to_string(), body);
-
-            tracing::error!(parent: &e, ".");
-            tracing::warn!(parent: &w, ".");
-            tracing::info!(parent: &i, ".");
-            tracing::debug!(parent: &d, ".");
-            tracing::trace!(parent: &t, ".");
-
-            let span =
-                tracing::warn_span!(log::request::SPAN_NAME, method, uri = uri.to_string(), body);
-
-            span
-        },
-    );
+    // let trace_layer = tower_http::trace::TraceLayer::new_for_http().make_span_with(
+    //     |request: &axum::http::Request<_>| {
+    //         let method = match request.method() {
+    //             &axum::http::Method::GET => " GET",
+    //             _ => request.method().as_str(),
+    //         };
+    //         let uri = request.uri();
+    //         let body = request
+    //             .extensions()
+    //             .get::<axum::extract::Json<serde_json::Value>>()
+    //             .map(|json| format!("{}", json.0))
+    //             .unwrap_or_else(|| "{}".to_string());
+    //
+    //         let e = tracing::error_span!(
+    //             log::HTTP_REQUEST_SPAN_NAME,
+    //             method,
+    //             uri = uri.to_string(),
+    //             body
+    //         );
+    //         let w = tracing::warn_span!(
+    //             log::HTTP_REQUEST_SPAN_NAME,
+    //             method,
+    //             uri = uri.to_string(),
+    //             body
+    //         );
+    //         let i = tracing::info_span!(
+    //             log::HTTP_REQUEST_SPAN_NAME,
+    //             method,
+    //             uri = uri.to_string(),
+    //             body
+    //         );
+    //         let d = tracing::debug_span!(
+    //             log::HTTP_REQUEST_SPAN_NAME,
+    //             method,
+    //             uri = uri.to_string(),
+    //             body
+    //         );
+    //         let t = tracing::trace_span!(
+    //             log::HTTP_REQUEST_SPAN_NAME,
+    //             method,
+    //             uri = uri.to_string(),
+    //             body
+    //         );
+    //
+    //         tracing::error!(parent: &e, ".");
+    //         tracing::warn!(parent: &w, ".");
+    //         tracing::info!(parent: &i, ".");
+    //         tracing::debug!(parent: &d, ".");
+    //         tracing::trace!(parent: &t, ".");
+    //
+    //         let span = tracing::warn_span!(
+    //             log::HTTP_REQUEST_SPAN_NAME,
+    //             method,
+    //             uri = uri.to_string(),
+    //             body
+    //         );
+    //
+    //         span
+    //     },
+    // );
 
     let cors = tower_http::cors::CorsLayer::new()
         .allow_origin(tower_http::cors::Any)
@@ -123,7 +110,7 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
         .route("/", axum::routing::get(root))
         .route("/users", axum::routing::post(create_user))
         .route("/generate-graph", axum::routing::post(generate_data))
-        .layer(trace_layer)
+        // .layer(trace_layer)
         .layer(cors);
 
     let listener = tokio::net::TcpListener::bind(format!(
@@ -134,6 +121,51 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
     .await?;
 
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
+
+    // deleteme(myles)
+    {
+        let e = tracing::error_span!(
+            log::HTTP_REQUEST_SPAN_NAME,
+            method = "PARENT",
+            uri = "/hello",
+            body = "{}"
+        );
+        let w = tracing::warn_span!(
+            log::HTTP_REQUEST_SPAN_NAME,
+            method = "PARENT",
+            uri = "/hello",
+            body = "{}"
+        );
+        let i = tracing::info_span!(
+            log::HTTP_REQUEST_SPAN_NAME,
+            method = "PARENT",
+            uri = "/hello",
+            body = "{}"
+        );
+        let d = tracing::debug_span!(
+            log::HTTP_REQUEST_SPAN_NAME,
+            method = "PARENT",
+            uri = "/hello",
+            body = "{}"
+        );
+        let t = tracing::trace_span!(
+            log::HTTP_REQUEST_SPAN_NAME,
+            method = "PARENT",
+            uri = "/hello",
+            body = "{}"
+        );
+
+        let method = "GET";
+        let uri = "/hello";
+        let body = "{}";
+
+        tracing::error!(parent: &e, method, uri, body);
+        tracing::warn!(parent: &w, method, uri, body);
+        tracing::info!(parent: &i, method, uri, body);
+        tracing::debug!(parent: &d, method, uri, body);
+        tracing::trace!(parent: &t, method, uri, body);
+    }
+
     axum::serve(listener, app).await?;
 
     Ok(())

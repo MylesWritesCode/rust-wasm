@@ -99,7 +99,14 @@ installation steps below.
    git clone git@github.com:MylesWritesCode/rust-cli-starter.git
    ```
 
-2. Install dependencies
+2. Build WASM libraries
+
+   ```sh
+   wasm-pack build ./packages/metamorph
+
+   ```
+
+3. Install dependencies
 
    ```sh
    # install node dependencies

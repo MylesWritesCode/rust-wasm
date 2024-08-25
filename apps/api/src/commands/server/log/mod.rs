@@ -3,6 +3,8 @@ pub mod request;
 
 use color_eyre::owo_colors::OwoColorize;
 
+pub const HTTP_REQUEST_SPAN_NAME: &str = "api::http::request";
+
 pub struct Formatter;
 
 // impl<'writer> tracing_subscriber::fmt::FormatFields<'writer> for Formatter {
@@ -31,7 +33,7 @@ where
         event: &tracing::Event<'_>,
     ) -> std::fmt::Result {
         let timestamp = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
-        write!(writer, "{timestamp}")?;
+        write!(writer, "{timestamp} ")?;
 
         let level: String = match *event.metadata().level() {
             tracing::Level::ERROR => "ERR".red().bold().to_string(),
@@ -41,9 +43,7 @@ where
             tracing::Level::TRACE => "TRC".purple().bold().to_string(),
         };
 
-        write!(writer, " | {level} |")?;
-
-        self.format_event(ctx, writer.by_ref(), event)?;
+        write!(writer, "| {level} | ")?;
 
         if let Some(scope) = ctx.event_scope() {
             for span in scope.from_root() {
@@ -51,15 +51,14 @@ where
 
                 #[allow(clippy::single_match)] // This is a placeholder for future use
                 match meta.name() {
-                    request::SPAN_NAME => {
-                        let mut visitor = request::RequestFields::default();
+                    HTTP_REQUEST_SPAN_NAME => {
+                        let mut visitor = request::RequestVisitor::default();
                         event.record(&mut visitor);
 
-                        write!(
-                            writer,
-                            "found method: {method:#?} ",
-                            method = event.fields()
-                        )?;
+                        match visitor.method {
+                            Some(method) => write!(writer, "{method} | ", method = method.green())?,
+                            None => write!(writer, "{method} | ", method = "NONE".purple())?,
+                        }
                     }
                     _ => {
                         write!(writer, " {name} ", name = meta.name())?;
