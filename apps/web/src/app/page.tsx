@@ -1,13 +1,8 @@
-import { log } from "@repo/logger";
-import { CounterButton, Link } from "@repo/ui";
-
 export const metadata = {
-  title: "Store | Kitchen Sink",
+  title: "rust-wasm",
 };
 
-export default function Store(): JSX.Element {
-  log("Hey! This is the Store page.");
-
+export default function Page(): JSX.Element {
   return (
     <div className="container">
       <h1 className="title">

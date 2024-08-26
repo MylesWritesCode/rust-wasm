@@ -1,4 +1,4 @@
-export default function Store(): JSX.Element {
+export default function Page(): JSX.Element {
   return (
     <div className="container">
       <h1 className="title">
