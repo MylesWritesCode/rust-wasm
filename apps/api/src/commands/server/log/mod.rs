@@ -4,8 +4,8 @@ pub(super) mod formatter;
 pub(super) mod http;
 
 pub(super) use http::layer::Layer;
+pub(super) use http::layer::LOG_PREFIX;
 pub(super) use http::visitor::Visitor;
-pub(super) use http::LOG_PREFIX;
 
 pub struct Logger;
 

@@ -1,3 +1,8 @@
+use axum::http;
+use std::str::FromStr;
+
+use color_eyre::owo_colors::OwoColorize;
+
 #[derive(Default)]
 pub struct Visitor {
     // pub const RECORD_KIND: &str = "kind";
@@ -63,24 +68,42 @@ impl tracing_subscriber::field::Visit for Visitor {
 
 impl std::fmt::Display for Visitor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(kind) = &self.kind {
-            write!(f, " kind={}", kind)?;
+        if let Some(method) = &self.method {
+            let method = match axum::http::Method::from_str(method) {
+                Ok(m) => match m {
+                    http::Method::OPTIONS => "OPTS",
+                    http::Method::GET => "GET ",
+                    http::Method::POST => "POST",
+                    http::Method::PUT => "PUT ",
+                    http::Method::DELETE => "DEL ",
+                    http::Method::HEAD => "HEAD",
+                    http::Method::TRACE => "TRCE",
+                    http::Method::CONNECT => "CONN",
+                    http::Method::PATCH => "PTCH",
+                    _ => "NONE",
+                },
+                _ => "NONE",
+            };
+
+            write!(f, " {}", method.bold().italic())?;
+        } else {
+            write!(f, " {}", "NONE".italic())?;
         }
 
-        if let Some(method) = &self.method {
-            write!(f, " method={}", method)?;
+        if let Some(kind) = &self.kind {
+            write!(f, " {}", kind.bold())?;
         }
 
         if let Some(status) = &self.status {
-            write!(f, " status={}", status)?;
+            write!(f, " {}", status.bold())?;
         }
 
         if let Some(uri) = &self.uri {
-            write!(f, " uri={}", uri)?;
+            write!(f, " {}", uri)?;
         }
 
         if let Some(latency) = &self.latency {
-            write!(f, " latency={}", latency)?;
+            write!(f, " {}ms", latency)?;
         }
 
         Ok(())

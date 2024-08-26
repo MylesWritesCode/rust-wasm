@@ -33,6 +33,8 @@ impl Layer {
 }
 
 pub const LOG_PREFIX: &str = "log::http";
+pub const RECORD_KIND_RES: &str = "RES";
+pub const RECORD_KIND_REQ: &str = "REQ";
 pub const RECORD_KIND: &str = "kind";
 pub const RECORD_METHOD: &str = "method";
 pub const RECORD_STATUS: &str = "status";
@@ -66,15 +68,12 @@ where
     B: 'static + body::HttpBody<Data = body::Bytes> + Send,
 {
     fn on_request(&mut self, request: &http::Request<B>, span: &tracing::Span) {
-        let uri = request.uri().to_string();
-        let method = request.method().to_string();
-
-        let _guard = span.enter();
-        span.record(RECORD_KIND, "REQ");
-        span.record(RECORD_METHOD, &method);
-        span.record(RECORD_URI, &uri);
-
-        // tracing::info!(parent: span, kind = "REQ", method, uri);
+        tracing::info!(
+            parent: span,
+            kind = RECORD_KIND_REQ,
+            method = request.method().to_string(),
+            uri = request.uri().to_string(),
+        );
     }
 }
 
@@ -88,9 +87,12 @@ impl<B> trace::OnResponse<B> for OnResponse {
         latency: std::time::Duration,
         span: &tracing::Span,
     ) {
-        let status = response.status().as_u16();
-
-        tracing::info!(parent: span, kind = "RES", latency = latency.as_millis(), status);
+        tracing::info!(
+            parent: span,
+            kind = RECORD_KIND_RES,
+            latency = latency.as_millis(),
+            status = response.status().as_u16()
+        );
     }
 }
 

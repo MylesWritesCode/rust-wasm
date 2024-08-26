@@ -39,17 +39,14 @@ where
                 if meta.name().starts_with(super::LOG_PREFIX) {
                     let mut visitor = super::Visitor::new();
                     event.record(&mut visitor);
-
-                    if visitor.kind == Some("RES".to_string()) {
-                        write!(writer, "{visitor}")?;
-                    }
+                    write!(writer, "{visitor}")?;
                 } else {
-                    write!(writer, " SPN | name={}", meta.name())?;
+                    write!(writer, " SPAN  name={}", meta.name())?;
                     // ctx.field_format().format_fields(writer.by_ref(), event)?;
                 }
             }
         } else {
-            write!(writer, " LOG | ")?;
+            write!(writer, " {}  ", "LOG".italic())?;
             ctx.field_format().format_fields(writer.by_ref(), event)?;
         }
 
