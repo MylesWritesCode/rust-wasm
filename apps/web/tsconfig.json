@@ -1,14 +1,13 @@
 {
-  "exclude": [
-    "node_modules"
-  ],
-  "extends": "@repo/typescript-config/vite.json",
+  "exclude": ["node_modules"],
+  "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "dist"
+    "outDir": "dist",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": [
-    "src",
-    "vite.config.ts"
-  ]
+  "include": ["src", "next.config.js", "next-env.d.ts", ".next/types/**/*.ts"]
 }
