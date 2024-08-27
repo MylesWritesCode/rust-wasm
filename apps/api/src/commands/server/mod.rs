@@ -33,7 +33,7 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
     let app = axum::Router::new()
         .route("/", axum::routing::get(root))
         .route("/users", axum::routing::post(create_user))
-        .route("/generate-graph", axum::routing::post(generate_data))
+        .route("/generate-graph", axum::routing::post(generate_graph))
         .layer(log::Layer::new().get_layer())
         .layer(cors::Cors::new().get_layer());
 
@@ -230,7 +230,7 @@ struct GenerateDataPayload {
     edges: i32,
 }
 
-async fn generate_data(
+async fn generate_graph(
     axum::Json(payload): axum::Json<GenerateDataPayload>,
 ) -> impl axum::response::IntoResponse {
     let mut elements: Vec<GraphElement> = Vec::new();
@@ -278,6 +278,12 @@ async fn generate_data(
             target,
         }));
     }
+
+    tracing::info!(
+        "Generated {} vertices and {} edges",
+        payload.vertices,
+        payload.edges
+    );
 
     (axum::http::StatusCode::OK, axum::Json(elements))
 }
