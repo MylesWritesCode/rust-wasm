@@ -1,7 +1,7 @@
 mod cors;
 mod log;
 
-use rand::Rng as _;
+use rand::Rng;
 
 #[derive(clap::Args)]
 pub(crate) struct Arguments {
@@ -191,7 +191,9 @@ impl std::ops::DerefMut for VertexId {
 #[derive(Debug, serde::Serialize)]
 struct Vertex {
     /// Used to determine which edges are connected to this vertex
-    id: VertexId,
+    pub id: VertexId,
+    label: String,
+    pub parent: Option<String>,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -235,13 +237,36 @@ async fn generate_graph(
 ) -> impl axum::response::IntoResponse {
     let mut elements: Vec<GraphElement> = Vec::new();
 
-    for _ in 0..payload.vertices {
-        elements.push(GraphElement::Vertex(Vertex {
-            id: VertexId::new(),
-        }));
-    }
-
     let mut rng = rand::thread_rng();
+
+    for _ in 0..payload.vertices {
+        let mut vertex = Vertex {
+            id: VertexId::new(),
+            label: nanoid::nanoid!().to_string(),
+            parent: None,
+        };
+
+        if elements.is_empty() {
+            elements.push(GraphElement::Vertex(vertex));
+            continue;
+        }
+
+        if rng.gen_range(0..100) < 80 {
+            // 20% chance to spawn a vertex with a parent
+            let i = rng.gen_range(0..elements.len());
+            match &elements[i] {
+                GraphElement::Vertex(v) => {
+                    vertex.parent = Some(v.id.to_string());
+                    elements.push(GraphElement::Vertex(vertex));
+                }
+                GraphElement::Edge(_) => {
+                    unreachable!("there should only be vertices in the array at this point")
+                }
+            };
+
+            // vertex.0.parent = Some(elements[i])
+        }
+    }
 
     for _ in 0..payload.edges {
         // Should always be a vertex, since from 0..payload.vertices in

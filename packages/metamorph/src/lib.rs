@@ -10,6 +10,9 @@ pub fn greet(name: &str) {
     alert(&format!("Hello, {name}!"));
 }
 
+#[wasm_bindgen]
+pub fn transform_rs() {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
