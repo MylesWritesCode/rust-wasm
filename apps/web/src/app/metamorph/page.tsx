@@ -1,89 +1,129 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useReducer, useState } from "react";
+
+import { Control, PerformanceCard, type Performance } from "./_components";
+
+const initial: Required<Performance> = {
+  api: 0,
+};
+
+type PerformanceAction = { type: "api"; payload: number } | { type: "reset" };
+
+function performanceReducer(state: Performance, action: PerformanceAction) {
+  switch (action.type) {
+    case "api":
+      return { ...state, api: action.payload };
+    case "reset":
+      return initial;
+  }
+}
 
 export default function Page(): JSX.Element {
-	const [vertices, setVertices] = useState(25);
-	const [edges, setEdges] = useState(25);
-	const [elements, setElements] = useState([]);
+  const [vertices, setVertices] = useState(1000);
+  const [edges, setEdges] = useState(1000);
+  const [elements, setElements] = useState([]);
 
-	const fetchGraphData = async (vertices: number, edges: number) => {
-		const res = await fetch("http://localhost:5001/generate-graph", {
-			method: "POST",
-			body: JSON.stringify({ vertices, edges }),
-			headers: {
-				"Content-Type": "application/json",
-			},
-		});
-		const data = await res.json();
-		setElements(data);
-	};
+  const [wasmPerf, dispatchWasmPerf] = useReducer(performanceReducer, initial);
+  const [jsPerf, dispatchJsPerf] = useReducer(performanceReducer, initial);
 
-	const items = [
-		{
-			name: "1000 vertices, 1000 edges",
-			action: async () => {
-				await fetchGraphData(1000, 1000);
-			},
-		},
-	];
+  const fetchGraphData = useCallback(
+    async (vertices: number, edges: number) => {
+      const start = performance.now();
+      const res = await fetch("http://localhost:5001/generate-graph", {
+        method: "POST",
+        body: JSON.stringify({ vertices, edges }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const end = performance.now();
+      const duration = end - start;
 
-	return (
-		<div className='container'>
-			<div className='flex-1 w-full gap-4 flex flex-col'>
-				<h1 className='title'>
-					<span>metamorph</span>
-				</h1>
-				<div className='grid grid-cols-2 gap-2 lg:grid-cols-4'>
-					<div className='lg:col-span-4 col-span-2 p-4 bg-emerald-400/20 grid grid-cols-2 gap-4'>
-						<div id='range-vertices' className='col-span-1 md:col-span-1'>
-							<span>Vertices: </span>
-							<span>{vertices}</span>
-							<input
-								type='range'
-								min={0}
-								max='10000'
-								value={vertices}
-								className='range mt-4 range-xs'
-								step='200'
-								onChange={(e) => setVertices(Number(e.target.value))}
-							/>
-						</div>
-						<div id='range-edges' className='col-span-1 md:col-span-1'>
-							<span>Edges: </span>
-							<span>{edges}</span>
-							<input
-								type='range'
-								min={0}
-								max='10000'
-								value={edges}
-								className='range mt-4 range-xs'
-								step='200'
-								onChange={(e) => setEdges(Number(e.target.value))}
-							/>
-						</div>
-					</div>
+      dispatchWasmPerf({ type: "api", payload: duration });
+      dispatchJsPerf({ type: "api", payload: duration });
 
-					<div
-						className='px-4 bg-violet-400/20 hover:bg-emerald-400/20 h-36 flex items-center justify-center rounded-md border-2 border-black select-none cursor-pointer flex-col gap-2'
-						onClick={() => fetchGraphData(vertices, edges)}
-						onKeyDown={() => fetchGraphData(vertices, edges)}>
-						<span>fetchGraphData</span>
-						<span>
-							{vertices} vertices, {edges} edges
-						</span>
-					</div>
-					{items.map(({ name, action }) => (
-						<div
-							key={name}
-							className='px-4 bg-violet-400/20 hover:bg-emerald-400/20 h-36 flex items-center justify-center rounded-md border-2 border-black select-none cursor-pointer'
-							onClick={action}
-							onKeyDown={action}>
-							{name}
-						</div>
-					))}
-				</div>
-			</div>
-		</div>
-	);
+      const data = await res.json();
+      setElements(data);
+    },
+    [],
+  );
+
+  const handleWasm = useCallback(async () => {
+    if (elements.length === 0) {
+      await fetchGraphData(vertices, edges);
+    }
+  }, [elements, vertices, edges, fetchGraphData]);
+
+  const items = [
+    {
+      name: "rust (wasm)",
+      action: async () => {
+        await handleWasm();
+      },
+    },
+    {
+      name: "js",
+      action: async () => {
+        await fetchGraphData(vertices, edges);
+      },
+    },
+  ];
+
+  const handleResetState = useCallback(() => {
+    setElements([]);
+    dispatchWasmPerf({ type: "reset" });
+    dispatchJsPerf({ type: "reset" });
+  }, []);
+
+  return (
+    <div className='container max-w-3xl'>
+      <div className='flex-1 w-full max-w-3xl gap-4 flex flex-col'>
+        <h1 className='title'>
+          <span>metamorph</span>
+        </h1>
+        <div className='grid grid-cols-2 gap-2'>
+          <div className='col-span-2 p-4 grid grid-cols-2 gap-4'>
+            <Control name='vertices' value={vertices} onChange={setVertices} />
+            <Control name='edges' value={edges} onChange={setEdges} />
+          </div>
+          <div
+            id='preload-api'
+            className='btn btn-success rounded-none'
+            onClick={() => fetchGraphData(vertices, edges)}
+            onKeyDown={() => fetchGraphData(vertices, edges)}>
+            <span>preload api</span>
+            <span>({elements.length} elements)</span>
+          </div>
+          <div
+            id='reset-state'
+            className='btn btn-error rounded-none'
+            onClick={handleResetState}
+            onKeyDown={handleResetState}>
+            <span>reset state</span>
+          </div>
+          {items.map(({ name, action }) => (
+            <div
+              key={name}
+              className='btn btn-primary rounded-none'
+              onClick={action}
+              onKeyDown={action}>
+              {name}
+            </div>
+          ))}
+          {(wasmPerf.api > 0 || jsPerf.api > 0) && (
+            <div className='card bg-info text-info-content shadow-xl rounded-none border-info-content col-span-2 mt-4'>
+              <div className='card-title w-full py-2'>
+                <h1 className='w-full'>performance stats</h1>
+              </div>
+            </div>
+          )}
+          {wasmPerf.api > 0 && (
+            <PerformanceCard name='rust' api={wasmPerf.api} />
+          )}
+          {jsPerf.api > 0 && <PerformanceCard name='js' api={jsPerf.api} />}
+        </div>
+      </div>
+    </div>
+  );
 }
