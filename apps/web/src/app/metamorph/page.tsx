@@ -4,16 +4,16 @@ import { useCallback, useReducer, useState } from "react";
 
 import { Control, PerformanceCard, type Performance } from "./_components";
 
-const initial: Required<Performance> = {
-  api: 0,
-};
+const initial: Required<Performance> = { api: 0, transform: 0 };
 
-type PerformanceAction = { type: "api"; payload: number } | { type: "reset" };
+type PerformanceActions = { type: "api"; payload: number } | { type: "transform"; payload: number } | { type: "reset" };
 
-function performanceReducer(state: Performance, action: PerformanceAction) {
+function performanceReducer(state: Required<Performance>, action: PerformanceActions) {
   switch (action.type) {
     case "api":
       return { ...state, api: action.payload };
+    case "transform":
+      return { ...state, transform: action.payload };
     case "reset":
       return initial;
   }
@@ -27,32 +27,40 @@ export default function Page(): JSX.Element {
   const [wasmPerf, dispatchWasmPerf] = useReducer(performanceReducer, initial);
   const [jsPerf, dispatchJsPerf] = useReducer(performanceReducer, initial);
 
-  const fetchGraphData = useCallback(
-    async (vertices: number, edges: number) => {
-      const start = performance.now();
-      const res = await fetch("http://localhost:5001/generate-graph", {
-        method: "POST",
-        body: JSON.stringify({ vertices, edges }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      const end = performance.now();
-      const duration = end - start;
+  const fetchGraphData = useCallback(async (vertices: number, edges: number) => {
+    const start = performance.now();
+    const res = await fetch("http://localhost:5001/generate-graph", {
+      method: "POST",
+      body: JSON.stringify({ vertices, edges }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const end = performance.now();
+    const duration = end - start;
 
-      dispatchWasmPerf({ type: "api", payload: duration });
-      dispatchJsPerf({ type: "api", payload: duration });
+    dispatchWasmPerf({ type: "api", payload: duration });
+    dispatchJsPerf({ type: "api", payload: duration });
 
-      const data = await res.json();
-      setElements(data);
-    },
-    [],
-  );
+    const data = await res.json();
+    setElements(data);
+  }, []);
 
   const handleWasm = useCallback(async () => {
     if (elements.length === 0) {
       await fetchGraphData(vertices, edges);
     }
+
+    const start = performance.now();
+    // do work here
+
+    // mock doing work
+    setTimeout(() => {
+      const end = performance.now();
+
+      const duration = end - start;
+      dispatchWasmPerf({ type: "transform", payload: duration });
+    }, 1000);
   }, [elements, vertices, edges, fetchGraphData]);
 
   const items = [
@@ -103,25 +111,19 @@ export default function Page(): JSX.Element {
             <span>reset state</span>
           </div>
           {items.map(({ name, action }) => (
-            <div
-              key={name}
-              className='btn btn-primary rounded-none'
-              onClick={action}
-              onKeyDown={action}>
+            <div key={name} className='btn btn-primary rounded-none' onClick={action} onKeyDown={action}>
               {name}
             </div>
           ))}
-          {(wasmPerf.api > 0 || jsPerf.api > 0) && (
+          {(wasmPerf?.api > 0 || jsPerf?.api > 0) && (
             <div className='card bg-info text-info-content shadow-xl rounded-none border-info-content col-span-2 mt-4'>
               <div className='card-title w-full py-2'>
                 <h1 className='w-full'>performance stats</h1>
               </div>
             </div>
           )}
-          {wasmPerf.api > 0 && (
-            <PerformanceCard name='rust' api={wasmPerf.api} />
-          )}
-          {jsPerf.api > 0 && <PerformanceCard name='js' api={jsPerf.api} />}
+          {wasmPerf.api > 0 && <PerformanceCard name='rust (wasm)' stats={wasmPerf} />}
+          {jsPerf.api > 0 && <PerformanceCard name='js' stats={jsPerf} />}
         </div>
       </div>
     </div>
