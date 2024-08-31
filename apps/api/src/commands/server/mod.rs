@@ -160,10 +160,10 @@ struct User {
 #[derive(
     Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
-struct VertexId(String);
+struct VertexId(Box<str>);
 
 impl std::ops::Deref for VertexId {
-    type Target = String;
+    type Target = str;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -172,13 +172,13 @@ impl std::ops::Deref for VertexId {
 
 impl VertexId {
     pub fn new() -> Self {
-        Self(nanoid::nanoid!().to_string())
+        Self(Box::from(nanoid::nanoid!()))
     }
 }
 
 impl<T: std::string::ToString> From<T> for VertexId {
     fn from(id: T) -> Self {
-        Self(id.to_string())
+        Self(Box::from(id.to_string()))
     }
 }
 
@@ -192,18 +192,18 @@ impl std::ops::DerefMut for VertexId {
 struct Vertex {
     /// Used to determine which edges are connected to this vertex
     pub id: VertexId,
-    label: String,
-    pub parent: Option<String>,
+    pub label: Box<str>,
+    pub parent: Option<Box<str>>,
 }
 
 #[derive(Debug, serde::Serialize)]
 struct Edge {
     /// Random id, doesn't matter
-    id: String,
+    pub id: Box<str>,
     /// ID of the source vertex
-    source: VertexId,
+    pub source: VertexId,
     /// ID of the target vertex
-    target: VertexId,
+    pub target: VertexId,
 }
 
 #[derive(Debug)]
@@ -227,45 +227,39 @@ impl serde::Serialize for GraphElement {
 #[derive(Debug, serde::Deserialize)]
 struct GenerateDataPayload {
     /// Number of vertices to generate
-    vertices: i32,
+    vertices: u32,
     /// Number of edges to generate
-    edges: i32,
+    edges: u32,
 }
 
+// @bench 25 vertices, 25 edges: ~ 1ms
+// @bench 10000 vertices, 10000 edges: ~ 335ms
 async fn generate_graph(
     axum::Json(payload): axum::Json<GenerateDataPayload>,
 ) -> impl axum::response::IntoResponse {
-    let mut elements: Vec<GraphElement> = Vec::new();
+    let count = payload.vertices + payload.edges;
+    let mut elements: Vec<GraphElement> =
+        Vec::with_capacity(count.try_into().expect("u32 to usize should be safe"));
 
     let mut rng = rand::thread_rng();
 
     for _ in 0..payload.vertices {
         let mut vertex = Vertex {
             id: VertexId::new(),
-            label: nanoid::nanoid!().to_string(),
+            label: Box::from(nanoid::nanoid!()),
             parent: None,
         };
 
-        if elements.is_empty() {
-            elements.push(GraphElement::Vertex(vertex));
-            continue;
-        }
-
-        if rng.gen_range(0..100) < 80 {
-            // 20% chance to spawn a vertex with a parent
+        // 20% chance to spawn a vertex with a parent, as long as we have at least one vertex in the vec
+        if !elements.is_empty() && rng.gen_range(0..100) > 80 {
             let i = rng.gen_range(0..elements.len());
-            match &elements[i] {
-                GraphElement::Vertex(v) => {
-                    vertex.parent = Some(v.id.to_string());
-                    elements.push(GraphElement::Vertex(vertex));
-                }
-                GraphElement::Edge(_) => {
-                    unreachable!("there should only be vertices in the array at this point")
-                }
-            };
 
-            // vertex.0.parent = Some(elements[i])
+            if let GraphElement::Vertex(v) = &elements[i] {
+                vertex.parent = Some(Box::from(v.id.to_string()));
+            }
         }
+
+        elements.push(GraphElement::Vertex(vertex));
     }
 
     for _ in 0..payload.edges {
@@ -281,27 +275,16 @@ async fn generate_graph(
         let source: usize = source.try_into().unwrap_or(0);
         let target: usize = target.try_into().unwrap_or(0);
 
-        let source = match &elements[source] {
-            GraphElement::Vertex(v) => v.id.clone(),
-            GraphElement::Edge(_) => {
-                tracing::error!("Source is an edge, this should never happen.");
-                continue;
-            }
-        };
-
-        let target = match &elements[target] {
-            GraphElement::Vertex(v) => v.id.clone(),
-            GraphElement::Edge(_) => {
-                tracing::error!("Target is an edge, this should never happen.");
-                continue;
-            }
-        };
-
-        elements.push(GraphElement::Edge(Edge {
-            id: nanoid::nanoid!().to_string(),
-            source,
-            target,
-        }));
+        // Only push an edge if both the source and target are valid vertices
+        if let (GraphElement::Vertex(s), GraphElement::Vertex(t)) =
+            (&elements[source], &elements[target])
+        {
+            elements.push(GraphElement::Edge(Edge {
+                id: Box::from(nanoid::nanoid!()),
+                source: s.id.clone(),
+                target: t.id.clone(),
+            }));
+        }
     }
 
     tracing::info!(
