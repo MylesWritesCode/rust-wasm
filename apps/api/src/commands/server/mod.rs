@@ -157,73 +157,6 @@ struct User {
     username: String,
 }
 
-#[derive(
-    Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
-)]
-struct VertexId(Box<str>);
-
-impl std::ops::Deref for VertexId {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl VertexId {
-    pub fn new() -> Self {
-        Self(Box::from(nanoid::nanoid!()))
-    }
-}
-
-impl<T: std::string::ToString> From<T> for VertexId {
-    fn from(id: T) -> Self {
-        Self(Box::from(id.to_string()))
-    }
-}
-
-impl std::ops::DerefMut for VertexId {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-#[derive(Debug, serde::Serialize)]
-struct Vertex {
-    /// Used to determine which edges are connected to this vertex
-    pub id: VertexId,
-    pub label: Box<str>,
-    pub parent: Option<Box<str>>,
-}
-
-#[derive(Debug, serde::Serialize)]
-struct Edge {
-    /// Random id, doesn't matter
-    pub id: Box<str>,
-    /// ID of the source vertex
-    pub source: VertexId,
-    /// ID of the target vertex
-    pub target: VertexId,
-}
-
-#[derive(Debug)]
-enum GraphElement {
-    Vertex(Vertex),
-    Edge(Edge),
-}
-
-impl serde::Serialize for GraphElement {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            GraphElement::Vertex(v) => v.serialize(serializer),
-            GraphElement::Edge(e) => e.serialize(serializer),
-        }
-    }
-}
-
 #[derive(Debug, serde::Deserialize)]
 struct GenerateDataPayload {
     /// Number of vertices to generate
@@ -238,14 +171,14 @@ async fn generate_graph(
     axum::Json(payload): axum::Json<GenerateDataPayload>,
 ) -> impl axum::response::IntoResponse {
     let count = payload.vertices + payload.edges;
-    let mut elements: Vec<GraphElement> =
+    let mut elements: Vec<graph::GraphElement> =
         Vec::with_capacity(count.try_into().expect("u32 to usize should be safe"));
 
     let mut rng = rand::thread_rng();
 
     for _ in 0..payload.vertices {
-        let mut vertex = Vertex {
-            id: VertexId::new(),
+        let mut vertex = graph::Vertex {
+            id: graph::VertexId::new(),
             label: Box::from(nanoid::nanoid!()),
             parent: None,
         };
@@ -254,12 +187,12 @@ async fn generate_graph(
         if !elements.is_empty() && rng.gen_range(0..100) > 80 {
             let i = rng.gen_range(0..elements.len());
 
-            if let GraphElement::Vertex(v) = &elements[i] {
+            if let graph::GraphElement::Vertex(v) = &elements[i] {
                 vertex.parent = Some(Box::from(v.id.to_string()));
             }
         }
 
-        elements.push(GraphElement::Vertex(vertex));
+        elements.push(graph::GraphElement::Vertex(vertex));
     }
 
     for _ in 0..payload.edges {
@@ -276,10 +209,10 @@ async fn generate_graph(
         let target: usize = target.try_into().unwrap_or(0);
 
         // Only push an edge if both the source and target are valid vertices
-        if let (GraphElement::Vertex(s), GraphElement::Vertex(t)) =
+        if let (graph::GraphElement::Vertex(s), graph::GraphElement::Vertex(t)) =
             (&elements[source], &elements[target])
         {
-            elements.push(GraphElement::Edge(Edge {
+            elements.push(graph::GraphElement::Edge(graph::Edge {
                 id: Box::from(nanoid::nanoid!()),
                 source: s.id.clone(),
                 target: t.id.clone(),

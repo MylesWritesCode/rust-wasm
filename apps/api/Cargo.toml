@@ -10,10 +10,8 @@ edition = "2021"
 [dependencies]
 axum = "0.7.5"
 axum-macros = "0.4.1"
-bon = "1.2.1"
 chrono = "0.4.38"
 color-eyre = "0.6.3"
-derive_more = { version = "1.0.0", features = ["full"] }
 nanoid = "0.4.0"
 rand = "0.8.5"
 serde = { version = "1.0.209", features = ["derive"] }
@@ -28,6 +26,7 @@ tracing-subscriber = { version = "0.3.18", features = [
   "fmt",
   "std",
 ] }
+graph = { path = "../../packages/graph" }
 
 [dependencies.clap]
 git = "https://github.com/clap-rs/clap"
