@@ -18,6 +18,7 @@
     "formatter": {
       "bracketSameLine": true,
       "jsxQuoteStyle": "single",
+      "quoteStyle": "single",
       "semicolons": "always"
     }
   }

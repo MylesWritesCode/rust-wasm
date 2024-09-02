@@ -16,8 +16,8 @@ pub fn greet(name: &str) {
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Glyph {
-    label: String,
-    angle: u8,
+    pub label: String,
+    pub angle: u8,
 }
 
 /// This is copied because we're testing the transform speed, and we want this
@@ -94,7 +94,7 @@ pub fn transform_rs(value: JsValue) -> JsValue {
             graph::GraphElement::Vertex(v) => {
                 let glyphs = if i % 8 == 0 {
                     let g = vec![Glyph {
-                        label: "a".to_string(),
+                        label: "some-glyph".to_string(),
                         angle: 45,
                     }];
                     Some(g)

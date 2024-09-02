@@ -4,6 +4,7 @@
   ],
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
+    "target": "esnext",
     "outDir": "dist",
     "plugins": [
       {
