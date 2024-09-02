@@ -14,7 +14,7 @@ pub fn greet(name: &str) {
 }
 
 #[wasm_bindgen(getter_with_clone)]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Glyph {
     pub label: String,
     pub angle: u8,
@@ -23,7 +23,7 @@ pub struct Glyph {
 /// This is copied because we're testing the transform speed, and we want this
 /// struct to be a little different than the one exported from `graph`.
 #[wasm_bindgen(getter_with_clone)]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Vertex {
     pub id: String,
     pub label: String,
