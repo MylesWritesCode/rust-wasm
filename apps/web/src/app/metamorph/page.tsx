@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useReducer, useState } from 'react';
+import { transformRs } from 'metamorph';
 import type { Glyph, Edge, Vertex } from 'metamorph';
 
 import { Control, PerformanceCard, type Performance } from './_components';
@@ -73,7 +74,7 @@ export default function Page(): JSX.Element {
 			_elements = await fetchGraphData(vertices, edges);
 		}
 
-		const { transformRs } = await import('metamorph');
+		// const { transformRs } = await import('metamorph');
 
 		const start = performance.now();
 		const s = transformRs(_elements);
