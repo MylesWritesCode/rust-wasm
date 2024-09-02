@@ -47,7 +47,7 @@ export default function Page(): JSX.Element {
 	}, []);
 
 	const handleWasm = useCallback(async () => {
-		if (elements.length === 0) {
+		if (elements.length === 0 || elements.length !== vertices + edges) {
 			await fetchGraphData(vertices, edges);
 		}
 
