@@ -84,6 +84,26 @@ impl<'de> serde::Deserialize<'de> for Element {
     }
 }
 
+// notes(myles)
+// - Check serialize and deserialize speeds, could be the reason this is slow.
+// - Figure out how to accept and return a Rust type here. It'd be nice if we
+//   can also get the type returned from the API for the front, but that's
+//   lower priority for now - really just a nice to have should this go into
+//   the very real world work project.
+//   - Might be a little hard, because we can only use C-style enums with
+//     wasm_bindgen. Something we can toy around with is sending back a vec of
+//     the same type, but the struct will just have optional Vertex and Edge on
+//     it. Seems gross imo, but if that's what we got, that's what we got. If
+//     so, that struct will definitely have to have custom serialization and
+//     deserialization impls.
+//   - Figure out if there's a better way than above, though I suspect not with
+//     the current limitations of wasm_bindgen (or maybe it's just wasm, idk).
+// - Verify that the lib is running in --release mode, though I suspect it
+//   already is when running with `wasm-pack build --release`.
+// - LATER Make the transform more complicated, as I would have at work. I know
+//   that the JS side transform isn't the greatest when dealing with so many
+//   fields on the JS interface, so I'd like to see if more realistic data will
+//   show a smaller delta between the WASM and JS transforms.
 #[wasm_bindgen(js_name = transformRs)]
 pub fn transform_rs(value: JsValue) -> JsValue {
     let elements: Vec<graph::GraphElement> = serde_wasm_bindgen::from_value(value).unwrap();
@@ -132,6 +152,38 @@ pub fn transform_rs(value: JsValue) -> JsValue {
     //
     // serde_wasm_bindgen::to_value(&elements).unwrap()
 }
+
+// notes(myles)
+// - Look into DOM manipulations, specifically with the canvas, thought I'm
+//   unsure if setting up cytoscape + rendering the graph is within the scope
+//   of this experiment. Perhaps if `transform_rs` is fast enough, I can look
+//   into it.
+//   - Draw SVG from WASM using data strings could work, but after the initial
+//     drawing, I'm unsure (and I doubt) the WASM side manipulating the
+//     positions is a good idea, considering the lag we get from crossing the
+//     WASM/JS boundary.
+//   - For the initial drawing, I know we get a bounding box per node, defined
+//     by x1, x2, y1, y2, w, h. The math seems simple enough here, but is it
+//     worth it to do this in WASM? Consider, cytoscape will have to send the
+//     bb to WASM, and then WASM will have to translate then send back to the
+//     DOM. The render flush fires very often (on move, on click), so there's
+//     probably technical limitations there, but testing it seems fun. The JS
+//     side doesn't actually do a lot of work on this front because it the
+//     event fires so often, so maybe just taking the most expensive part from
+//     the JS side (calculating world coords) of glyphs and doing that in WASM
+//     could be a potential win.
+//   - Someone suggested accessing the WASM memory on the JS side directly, so
+//     that's a potential avenue to explore. We'd have to create the pointer
+//     on the Rust side and send it to the front, and the front would have to
+//     read the pointer for those addresses, but right now this is much more
+//     easily solved with cytoscape-layers.
+// - LATER Definitely out of scope for this project, but using Bevy to build a
+//   graphing library seems like another fun side-project. The problem is I'm
+//   not sure how much work needs to be done to build out a graphing library in
+//   Bevy, or if graph libraries already exist. Again, fun side project, but
+//   definitely out of scope for this.
+//
+//
 
 #[cfg(test)]
 mod tests {
