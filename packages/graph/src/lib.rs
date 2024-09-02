@@ -1,3 +1,6 @@
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
 #[derive(
     Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, serde::Serialize, serde::Deserialize,
 )]
