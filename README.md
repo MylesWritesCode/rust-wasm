@@ -17,11 +17,11 @@
     </a>
     <br />
     <br />
-    <a href="https://github.com/MylesWritesCode/rust-cli-starter">View Demo</a>
+    <a href="https://github.com/MylesWritesCode/rust-wasm">View Demo</a>
     ·
-    <a href="https://github.com/MylesWritesCode/rust-cli-starter/issues">Report Bug</a>
+    <a href="https://github.com/MylesWritesCode/rust-wasm/issues">Report Bug</a>
     ·
-    <a href="https://github.com/MylesWritesCode/rust-cli-starter/issues">Request Feature</a>
+    <a href="https://github.com/MylesWritesCode/rust-wasm/issues">Request Feature</a>
   </p>
 </div>
 
@@ -93,10 +93,10 @@ installation steps below.
 
    ```sh
    # with https
-   git clone https://github.com/MylesWritesCode/rust-cli-starter.git
+   git clone https://github.com/MylesWritesCode/rust-wasm.git
 
    # or ssh
-   git clone git@github.com:MylesWritesCode/rust-cli-starter.git
+   git clone git@github.com:MylesWritesCode/rust-wasm.git
    ```
 
 2. Build WASM libraries
