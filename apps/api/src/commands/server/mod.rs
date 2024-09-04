@@ -1,7 +1,9 @@
 mod cors;
+mod docs;
 mod log;
 
 use rand::Rng;
+use utoipa::OpenApi;
 
 #[derive(clap::Args)]
 pub(crate) struct Arguments {
@@ -30,10 +32,13 @@ pub(crate) async fn run(args: &Arguments) -> crate::Result<()> {
 async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
     log::Logger::new().init();
 
-    let app = axum::Router::new()
+    let router = axum::Router::new()
         .route("/", axum::routing::get(root))
         .route("/users", axum::routing::post(create_user))
         .route("/generate-graph", axum::routing::post(generate_graph))
+        .merge(
+            utoipa_swagger_ui::SwaggerUi::new("/docs").url("/openapi.json", docs::Docs::openapi()),
+        )
         .layer(log::Layer::new().get_layer())
         .layer(cors::Cors::new().get_layer());
 
@@ -46,80 +51,7 @@ async fn start(host: Option<String>, port: Option<u16>) -> crate::Result<()> {
 
     tracing::debug!("Listening on {}", listener.local_addr().unwrap());
 
-    tracing::error!(
-        x = "value",
-        complex.foo = "foo",
-        complex.bar = "bar",
-        "message",
-    );
-    tracing::warn!(
-        x = "value",
-        complex.foo = "foo",
-        complex.bar = "bar",
-        "message",
-    );
-    tracing::info!(
-        x = "value",
-        complex.foo = "foo",
-        complex.bar = "bar",
-        "message",
-    );
-    tracing::debug!(
-        x = "value",
-        complex.foo = "foo",
-        complex.bar = "bar",
-        "message",
-    );
-    tracing::trace!(
-        x = "value",
-        complex.foo = "foo",
-        complex.bar = "bar",
-        "message",
-    );
-
-    // deleteme(myles)
-    {
-        let uri = "/hello";
-        let body = "{}";
-
-        let kind = "REQ";
-        let method = axum::http::Method::GET.to_string();
-        let e = tracing::error_span!(log::LOG_PREFIX, method, uri, body, kind);
-        let kind = "RES";
-        tracing::error!(parent: &e, kind, "has error");
-
-        let method = axum::http::Method::PUT.to_string();
-        let w = tracing::warn_span!(log::LOG_PREFIX, method, uri, body, kind);
-        tracing::warn!(parent: &w, "has warning");
-
-        let method = axum::http::Method::POST.to_string();
-        let i = tracing::info_span!(log::LOG_PREFIX, method, uri, body, kind);
-        tracing::info!(parent: &i, "has info");
-
-        let method = axum::http::Method::HEAD.to_string();
-        let d = tracing::debug_span!(log::LOG_PREFIX, method, uri, body, kind);
-        tracing::debug!(parent: &d, "has debug");
-
-        let method = axum::http::Method::PATCH.to_string();
-        let t = tracing::trace_span!(log::LOG_PREFIX, method, uri, body, kind);
-        tracing::trace!(parent: &t, "has trace");
-
-        let span = tracing::info_span!(log::LOG_PREFIX, method, uri, body, kind);
-
-        let method = axum::http::Method::TRACE.to_string();
-        tracing::info!(parent: &span, method, uri, body, kind);
-
-        let method = axum::http::Method::DELETE.to_string();
-        tracing::info!(parent: &span, method, uri, body, kind);
-
-        let method = axum::http::Method::OPTIONS.to_string();
-        tracing::info!(parent: &span, method, uri, body, kind);
-
-        let method = axum::http::Method::CONNECT.to_string();
-        tracing::info!(parent: &span, method, uri, body, kind);
-    }
-
-    axum::serve(listener, app).await?;
+    axum::serve(listener, router).await?;
 
     Ok(())
 }
@@ -165,14 +97,20 @@ struct GenerateDataPayload {
     edges: u32,
 }
 
-// @bench 25 vertices, 25 edges: ~ 1ms
-// @bench 10000 vertices, 10000 edges: ~ 335ms
+#[derive(Debug, utoipa::ToSchema, serde::Serialize, serde::Deserialize)]
+struct GenerateDataResponse {
+    vertices: Vec<graph::Vertex>,
+    edges: Vec<graph::Edge>,
+}
+
+#[utoipa::path(get, path = "generate-graph")]
 async fn generate_graph(
     axum::Json(payload): axum::Json<GenerateDataPayload>,
 ) -> impl axum::response::IntoResponse {
-    let count = payload.vertices + payload.edges;
-    let mut elements: Vec<graph::GraphElement> =
-        Vec::with_capacity(count.try_into().expect("u32 to usize should be safe"));
+    // These should be safe to unwrap, since they are u32 and we're converting them to usize
+    let mut vertices: Vec<graph::Vertex> =
+        Vec::with_capacity(payload.vertices.try_into().unwrap_or(0));
+    let mut edges: Vec<graph::Edge> = Vec::with_capacity(payload.edges.try_into().unwrap_or(0));
 
     let mut rng = rand::thread_rng();
 
@@ -184,15 +122,15 @@ async fn generate_graph(
         };
 
         // 20% chance to spawn a vertex with a parent, as long as we have at least one vertex in the vec
-        if !elements.is_empty() && rng.gen_range(0..100) > 80 {
-            let i = rng.gen_range(0..elements.len());
+        if !vertices.is_empty() && rng.gen_range(0..100) > 80 {
+            let i = rng.gen_range(0..vertices.len());
 
-            if let graph::GraphElement::Vertex(v) = &elements[i] {
-                vertex.parent = Some(Box::from(v.id.to_string()));
-            }
+            if let Some(parent) = vertices.get(i) {
+                vertex.parent = Some(Box::from(parent.id.to_string()));
+            };
         }
 
-        elements.push(graph::GraphElement::Vertex(vertex));
+        vertices.push(vertex);
     }
 
     for _ in 0..payload.edges {
@@ -209,14 +147,14 @@ async fn generate_graph(
         let target: usize = target.try_into().unwrap_or(0);
 
         // Only push an edge if both the source and target are valid vertices
-        if let (graph::GraphElement::Vertex(s), graph::GraphElement::Vertex(t)) =
-            (&elements[source], &elements[target])
-        {
-            elements.push(graph::GraphElement::Edge(graph::Edge {
+        if let (Some(s), Some(t)) = (&vertices.get(source), &vertices.get(target)) {
+            let edge = graph::Edge {
                 id: Box::from(nanoid::nanoid!()),
                 source: s.id.clone(),
                 target: t.id.clone(),
-            }));
+            };
+
+            edges.push(edge);
         }
     }
 
@@ -226,5 +164,8 @@ async fn generate_graph(
         payload.edges
     );
 
-    (axum::http::StatusCode::OK, axum::Json(elements))
+    (
+        axum::http::StatusCode::OK,
+        axum::Json(GenerateDataResponse { vertices, edges }),
+    )
 }

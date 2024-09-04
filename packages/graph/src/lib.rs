@@ -35,15 +35,17 @@ impl std::ops::DerefMut for VertexId {
     }
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Vertex {
     /// Used to determine which edges are connected to this vertex
     pub id: VertexId,
+    /// A human-readable identifier for the vertex
     pub label: Box<str>,
+    /// An optional parent vertex
     pub parent: Option<Box<str>>,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Edge {
     /// Random id, doesn't matter
     pub id: Box<str>,

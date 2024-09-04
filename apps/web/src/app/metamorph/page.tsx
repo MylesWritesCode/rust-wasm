@@ -2,11 +2,12 @@
 
 import { useCallback, useReducer, useState } from 'react';
 // import { transformRs } from 'metamorph';
+import * as wasm from 'metamorph';
 import type { Glyph, Edge, Vertex } from 'metamorph';
 
 import { Control, PerformanceCard, type Performance } from './_components';
 
-const initial: Required<Performance> = { api: 0, transform: 0 };
+const initialPerformance: Required<Performance> = { api: 0, transform: 0 };
 
 type PerformanceActions = { type: 'api'; payload: number } | { type: 'transform'; payload: number } | { type: 'reset' };
 
@@ -17,7 +18,27 @@ function performanceReducer(state: Required<Performance>, action: PerformanceAct
     case 'transform':
       return { ...state, transform: action.payload };
     case 'reset':
-      return initial;
+      return initialPerformance;
+  }
+}
+
+const initialCount: Count = { vertices: 10000, edges: 10000 };
+
+interface Count {
+  vertices: number;
+  edges: number;
+}
+
+type CountActions = { type: 'vertices' | 'edges'; payload: number } | { type: 'reset' };
+
+function countReducer(state: Count, action: CountActions) {
+  switch (action.type) {
+    case 'vertices':
+      return { ...state, vertices: action.payload };
+    case 'edges':
+      return { ...state, edges: action.payload };
+    case 'reset':
+      return initialCount;
   }
 }
 
@@ -41,18 +62,19 @@ function isGraphEdge(element: unknown): element is GraphEdge {
 }
 
 export default function Page(): JSX.Element {
-  const [vertices, setVertices] = useState(1000);
-  const [edges, setEdges] = useState(1000);
-  const [elements, setElements] = useState<GraphElement[]>([]);
+  const [count, dispatchCount] = useReducer(countReducer, initialCount);
 
-  const [wasmPerf, dispatchWasmPerf] = useReducer(performanceReducer, initial);
-  const [jsPerf, dispatchJsPerf] = useReducer(performanceReducer, initial);
+  const [wasmPerf, dispatchWasmPerf] = useReducer(performanceReducer, initialPerformance);
+  const [jsPerf, dispatchJsPerf] = useReducer(performanceReducer, initialPerformance);
 
-  const fetchGraphData = useCallback(async (vertices: number, edges: number) => {
+  const [vertices, setVertices] = useState<GraphVertex[]>([]);
+  const [edges, setEdges] = useState<GraphEdge[]>([]);
+
+  const fetchGraphData = useCallback(async () => {
     const start = performance.now();
     const res = await fetch('http://localhost:5001/generate-graph', {
       method: 'POST',
-      body: JSON.stringify({ vertices, edges }),
+      body: JSON.stringify(count),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -64,79 +86,93 @@ export default function Page(): JSX.Element {
     dispatchJsPerf({ type: 'api', payload: duration });
 
     const data = await res.json();
-    setElements(data);
+
+    if (data.vertices) {
+      setVertices(data.vertices);
+    }
+
+    if (data.edges) {
+      setEdges(data.edges);
+    }
+
     return data;
-  }, []);
+  }, [count]);
 
   const handleWasm = useCallback(async () => {
-    let _elements = elements;
-    if (_elements.length === 0 || _elements.length !== vertices + edges) {
-      _elements = await fetchGraphData(vertices, edges);
+    let _v = vertices;
+    let _e = edges;
+    if (_v.length === 0 || _e.length === 0 || _v.length !== count.vertices || _e.length !== count.edges) {
+      const { vertices, edges } = await fetchGraphData();
+      _v = vertices;
+      _e = edges;
     }
 
     const { transformRs } = await import('metamorph');
 
     const start = performance.now();
-    const s = transformRs(_elements);
+    const s = transformRs([]);
     const end = performance.now();
     const duration = end - start;
 
     console.log(s);
     dispatchWasmPerf({ type: 'transform', payload: duration });
-  }, [elements, vertices, edges, fetchGraphData]);
+  }, [vertices, edges, count, fetchGraphData]);
 
-  const transformJs = useCallback((elements: GraphElement[]) => {
+  const transformJs = useCallback((v, e) => {
     const result: (Vertex | Edge)[] = [];
-    for (const [i, element] of elements.entries()) {
-      if (isGraphEdge(element)) {
-        const edge: Edge = {
-          id: element.id,
-          source: element.source,
-          target: element.target,
-          free: () => { },
-        };
-        result.push(edge);
-      } else {
-        let glyphs: Glyph[] | undefined;
-
-        if (i % 8 === 0) {
-          glyphs = [
-            {
-              label: 'some-glyph',
-              angle: 45,
-              free: () => { },
-            },
-          ];
-        }
-
-        const vertex: Vertex = {
-          id: element.id,
-          label: element.label,
-          glyphs,
-          parent: element.parent,
-          free: () => { },
-        };
-        result.push(vertex);
-      }
-    }
+    // for (const [i, element] of elements.entries()) {
+    //   if (isGraphEdge(element)) {
+    //     const edge: Edge = {
+    //       id: element.id,
+    //       source: element.source,
+    //       target: element.target,
+    //       free: () => { },
+    //     };
+    //     result.push(edge);
+    //   } else {
+    //     let glyphs: Glyph[] | undefined;
+    //
+    //     if (i % 8 === 0) {
+    //       glyphs = [
+    //         {
+    //           label: 'some-glyph',
+    //           angle: 45,
+    //           free: () => { },
+    //         },
+    //       ];
+    //     }
+    //
+    //     const vertex: Vertex = {
+    //       id: element.id,
+    //       label: element.label,
+    //       glyphs,
+    //       parent: element.parent,
+    //       free: () => { },
+    //     };
+    //     result.push(vertex);
+    //   }
+    // }
 
     return result;
   }, []);
 
   const handleJs = useCallback(async () => {
-    let _elements = elements;
-    if (_elements.length === 0 || _elements.length !== vertices + edges) {
-      _elements = await fetchGraphData(vertices, edges);
+    let _v = vertices;
+    let _e = edges;
+    if (_v.length === 0 || _e.length === 0 || _v.length !== count.vertices || _e.length !== count.edges) {
+      const { vertices, edges } = await fetchGraphData();
+      _v = vertices;
+      _e = edges;
     }
 
     const start = performance.now();
-    const s = transformJs(_elements);
+    const s = transformJs(_v, _e);
     const end = performance.now();
     const duration = end - start;
     dispatchJsPerf({ type: 'transform', payload: duration });
 
     console.log(s);
-  }, [elements, vertices, edges, fetchGraphData, transformJs]);
+  }, [vertices, edges, count, fetchGraphData, transformJs]);
 
   const items = [
     {
@@ -150,7 +186,8 @@ export default function Page(): JSX.Element {
   ];
 
   const handleResetState = useCallback(() => {
-    setElements([]);
+    setVertices([]);
+    setEdges([]);
     dispatchWasmPerf({ type: 'reset' });
     dispatchJsPerf({ type: 'reset' });
   }, []);
@@ -163,16 +200,24 @@ export default function Page(): JSX.Element {
         </h1>
         <div className='grid grid-cols-2 gap-2'>
           <div className='col-span-2 p-4 grid grid-cols-2 gap-4'>
-            <Control name='vertices' value={vertices} onChange={setVertices} />
-            <Control name='edges' value={edges} onChange={setEdges} />
+            <Control
+              name='vertices'
+              value={count.vertices}
+              onChange={(payload) => dispatchCount({ type: 'vertices', payload })}
+            />
+            <Control
+              name='edges'
+              value={count.edges}
+              onChange={(payload) => dispatchCount({ type: 'edges', payload })}
+            />
           </div>
           <div
             id='preload-api'
             className='btn btn-success rounded-none'
-            onClick={() => fetchGraphData(vertices, edges)}
-            onKeyDown={() => fetchGraphData(vertices, edges)}>
+            onClick={() => fetchGraphData()}
+            onKeyDown={() => fetchGraphData()}>
             <span>preload api</span>
-            <span>({elements.length} elements)</span>
+            <span>({vertices.length + edges.length} elements)</span>
           </div>
           <div
             id='reset-state'

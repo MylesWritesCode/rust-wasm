@@ -46,9 +46,11 @@ pub struct Edge {
 
 /// This is copied because we're testing the transform speed, and we want this
 /// struct to be a little different than the one exported from `graph`.
+#[derive(Clone)]
 enum Element {
     Vertex(Vertex),
     Edge(Edge),
+    None,
 }
 
 impl serde::Serialize for Element {
@@ -59,6 +61,7 @@ impl serde::Serialize for Element {
         match self {
             Element::Vertex(v) => v.serialize(serializer),
             Element::Edge(e) => e.serialize(serializer),
+            Element::None => serializer.serialize_none(),
         }
     }
 }
@@ -107,7 +110,7 @@ impl<'de> serde::Deserialize<'de> for Element {
 #[wasm_bindgen(js_name = transformRs)]
 pub fn transform_rs(value: JsValue) -> JsValue {
     let elements: Vec<graph::GraphElement> = serde_wasm_bindgen::from_value(value).unwrap();
-    let mut res: Vec<Element> = Vec::new();
+    let mut result = vec![Element::None; elements.len()];
 
     for (i, element) in elements.iter().enumerate() {
         match element {
@@ -129,9 +132,9 @@ pub fn transform_rs(value: JsValue) -> JsValue {
                     glyphs,
                 };
                 let element = Element::Vertex(vertex);
-
-                res.push(element);
+                result[i] = element;
             }
+
             graph::GraphElement::Edge(e) => {
                 let edge = Edge {
                     id: e.id.to_string(),
@@ -139,13 +142,12 @@ pub fn transform_rs(value: JsValue) -> JsValue {
                     target: e.target.to_string(),
                 };
                 let element = Element::Edge(edge);
-
-                res.push(element);
+                result[i] = element;
             }
         };
     }
 
-    serde_wasm_bindgen::to_value(&res).unwrap()
+    serde_wasm_bindgen::to_value(&result).unwrap()
 
     // let elements: Vec<graph::GraphElement> = serde_wasm_bindgen::from_value(value).unwrap();
     // // do stuff with elements

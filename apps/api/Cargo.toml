@@ -12,12 +12,13 @@ axum = "0.7.5"
 axum-macros = "0.4.1"
 chrono = "0.4.38"
 color-eyre = "0.6.3"
+graph = { path = "../../packages/graph" }
 nanoid = "0.4.0"
 rand = "0.8.5"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 thiserror = "1.0.63"
-tokio = { version = "1.39.3", features = ["full"] }
+tokio = { version = "1.40.0", features = ["full"] }
 tower-http = { version = "0.5.2", features = ["cors", "trace"] }
 tracing = "0.1.40"
 tracing-core = "0.1.32"
@@ -26,7 +27,8 @@ tracing-subscriber = { version = "0.3.18", features = [
   "fmt",
   "std",
 ] }
-graph = { path = "../../packages/graph" }
+utoipa = { version = "4", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "7.1.0", features = ["axum"] }
 
 [dependencies.clap]
 git = "https://github.com/clap-rs/clap"

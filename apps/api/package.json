@@ -1,7 +1,7 @@
 {
-  "name": "api",
-  "scripts": {
-    "dev": "cargo run server start",
-    "build": "cargo build --release"
-  }
+	"name": "api",
+	"scripts": {
+		"dev": "cargo run --release server start",
+		"build": "cargo build --release"
+	}
 }
