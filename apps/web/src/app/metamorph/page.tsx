@@ -110,7 +110,7 @@ export default function Page(): JSX.Element {
     const { transformRs } = await import('metamorph');
 
     const start = performance.now();
-    const s = transformRs([]);
+    const s = transformRs([..._v, ..._e]);
     const end = performance.now();
     const duration = end - start;
 
@@ -118,40 +118,40 @@ export default function Page(): JSX.Element {
     dispatchWasmPerf({ type: 'transform', payload: duration });
   }, [vertices, edges, count, fetchGraphData]);
 
-  const transformJs = useCallback((v, e) => {
+  const transformJs = useCallback((v: GraphVertex[], e: GraphEdge[]) => {
     const result: (Vertex | Edge)[] = [];
-    // for (const [i, element] of elements.entries()) {
-    //   if (isGraphEdge(element)) {
-    //     const edge: Edge = {
-    //       id: element.id,
-    //       source: element.source,
-    //       target: element.target,
-    //       free: () => { },
-    //     };
-    //     result.push(edge);
-    //   } else {
-    //     let glyphs: Glyph[] | undefined;
-    //
-    //     if (i % 8 === 0) {
-    //       glyphs = [
-    //         {
-    //           label: 'some-glyph',
-    //           angle: 45,
-    //           free: () => { },
-    //         },
-    //       ];
-    //     }
-    //
-    //     const vertex: Vertex = {
-    //       id: element.id,
-    //       label: element.label,
-    //       glyphs,
-    //       parent: element.parent,
-    //       free: () => { },
-    //     };
-    //     result.push(vertex);
-    //   }
-    // }
+    for (const [i, element] of [...v, ...e].entries()) {
+      if (isGraphEdge(element)) {
+        const edge: Edge = {
+          id: element.id,
+          source: element.source,
+          target: element.target,
+          free: () => { },
+        };
+        result.push(edge);
+      } else {
+        let glyphs: Glyph[] | undefined;
+
+        if (i % 8 === 0) {
+          glyphs = [
+            {
+              label: 'some-glyph',
+              angle: 45,
+              free: () => { },
+            },
+          ];
+        }
+
+        const vertex: Vertex = {
+          id: element.id,
+          label: element.label,
+          glyphs,
+          parent: element.parent,
+          free: () => { },
+        };
+        result.push(vertex);
+      }
+    }
 
     return result;
   }, []);
@@ -169,9 +169,9 @@ export default function Page(): JSX.Element {
     const s = transformJs(_v, _e);
     const end = performance.now();
     const duration = end - start;
-    dispatchJsPerf({ type: 'transform', payload: duration });
 
     console.log(s);
+    dispatchJsPerf({ type: 'transform', payload: duration });
   }, [vertices, edges, count, fetchGraphData, transformJs]);
 
   const items = [
